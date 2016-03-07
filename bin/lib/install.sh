@@ -7,8 +7,8 @@ install () {
   local DIR="$(realpath --canonicalize-missing nginx/)"
   local COMPILE=""
   local ORIG_PWD="$PWD"
-  local BASE="nginx-1.8.1"
-  local ARCHIVE="${BASE}.tar.gz"
+  local ARCHIVE="$(latest-version)"
+  local BASE="$(basename "$ARCHIVE" .tar.gz)"
   local URL="http://nginx.org/download/${ARCHIVE}"
   local SOURCE_DIR="/tmp/$(mktemp -d "$BASE".XXXXXXXXXXXXXXXXXX)"
   local UNTAR="tar --directory=""$SOURCE_DIR"" -xzf "
@@ -62,5 +62,13 @@ install () {
 
   cd "$ORIG_PWD"
   bash_setup GREEN "=== {{NGINX installed}}: $DIR"
+}
+
+latest-version () {
+  curl -s 'http://nginx.org/en/download.html' | \
+  grep -Po "Stable .+?\K(nginx-[\.\d]+\.tar.gz)" || {
+    bash_setup RED "!!! Failed to get latest version";
+    exit 1;
+  }
 }
 
