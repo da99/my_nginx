@@ -13,19 +13,26 @@ install () {
   local SOURCE_DIR="/tmp/$(mktemp -d "$BASE".XXXXXXXXXXXXXXXXXX)"
   local UNTAR="tar --directory=""$SOURCE_DIR"" -xzf "
 
+  # === Remove old builds of NGINX to prevent stuffing /tmp:
+  rm -rf /tmp/${BASE}.*
+
+  # === Init /tmp dir:
   mkdir -p "$SOURCE_DIR"
 
+  # === Determine PREFIX:
   if [[ -n "$@" && "$@" != *"--"* ]]; then
     DIR="$(realpath --canonicalize-missing "$1")";
     shift
+    mkdir -p "$DIR"
   fi
 
+  # === Determine compilation options:
   if [[ -n "$@" ]]; then
     COMPILE="$@"
   fi
 
-  mkdir -p "$DIR"
 
+  # === Download archive file if it doesn't exist:
   mkdir -p $THIS_DIR/tmp
   cd $THIS_DIR/tmp
 
@@ -33,12 +40,14 @@ install () {
     wget --quiet "$URL"
   fi
 
+  # === Untar archive. Re-download if file is corrupt:
   $UNTAR "$ARCHIVE" || {
     rm -f "$ARCHIVE"
     wget --quiet "$URL"
     $UNTAR "$ARCHIVE"
   }
 
+  # === Compile:
   cd "$SOURCE_DIR"
   cd "$BASE"
   ./configure                          \
