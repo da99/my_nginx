@@ -7,10 +7,15 @@ install () {
   local DIR="$(realpath --canonicalize-missing nginx/)"
   local COMPILE=""
   local ORIG_PWD="$PWD"
-  local SOURCE="nginx-1.8.0.tar.gz"
-  local SOURCE_DIR="$(basename "$SOURCE" ".tar.gz")"
+  local BASE="nginx-1.8.1"
+  local ARCHIVE="${BASE}.tar.gz"
+  local URL="http://nginx.org/download/${ARCHIVE}"
+  local SOURCE_DIR="/tmp/$(mktemp -d "$BASE".XXXXXXXXXXXXXXXXXX)"
+  local UNTAR="tar --directory=""$SOURCE_DIR"" -xzf "
 
-  if [[ -n "$@" && "$@" != *"--" ]]; then
+  mkdir -p "$SOURCE_DIR"
+
+  if [[ -n "$@" && "$@" != *"--"* ]]; then
     DIR="$(realpath --canonicalize-missing "$1")";
     shift
   fi
@@ -21,11 +26,21 @@ install () {
 
   mkdir -p "$DIR"
 
-  cd /tmp
-  rm -f "$SOURCE"
-  wget http://nginx.org/download/$SOURCE
-  tar -xzf "$SOURCE"
+  mkdir -p $THIS_DIR/tmp
+  cd $THIS_DIR/tmp
+
+  if [[ ! -f "$ARCHIVE" ]]; then
+    wget --quiet "$URL"
+  fi
+
+  $UNTAR "$ARCHIVE" || {
+    rm -f "$ARCHIVE"
+    wget --quiet "$URL"
+    $UNTAR "$ARCHIVE"
+  }
+
   cd "$SOURCE_DIR"
+  cd "$BASE"
   ./configure                          \
     --prefix="$DIR"                  \
     --without-http_auth_basic_module    \
@@ -48,3 +63,4 @@ install () {
   cd "$ORIG_PWD"
   bash_setup GREEN "=== {{NGINX installed}}: $DIR"
 }
+
