@@ -50,8 +50,9 @@ install () {
   # === Compile:
   cd "$SOURCE_DIR"
   cd "$BASE"
-  ./configure                          \
-    --prefix="$DIR"                  \
+  ./configure                               \
+    --prefix="$DIR"                          \
+    --error-log-path="$DIR/startup.error.log" \
     --without-http_auth_basic_module    \
     --without-http_autoindex_module      \
     --without-http_geo_module             \
@@ -61,7 +62,7 @@ install () {
     --without-http_scgi_module           \
     --without-http_empty_gif_module       \
     --without-http_ssi_module              \
-    \
+                                            \
     --without-mail_pop3_module       \
     --without-mail_imap_module        \
     --without-mail_smtp_module         \
