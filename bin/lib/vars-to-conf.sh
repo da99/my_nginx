@@ -17,15 +17,16 @@ vars-to-conf () {
   local +x ENV_NAME="$(bash_setup upcase "$1")"; shift
   local +x TEMPLATE="$(realpath -m "$1")"; shift
 
-  # === CHECK IF ENVS match:
   local +x ENVS="$(envs)"
   local +x ENV_COUNT="$(echo "$ENVS" | wc -l)"
 
+  # === There must be at least one ENV found:
   if [[ $ENV_COUNT -lt 1 ]]; then
     bash_setup RED "=== {{No ENVS}} found in config/"
     exit 1
   fi
 
+  # === Make sure this ENV is not missing a VAR from the other ENVs:
   for VAR_NAME in $(vars); do
     local +x FILE="config/${ENV_NAME}/${VAR_NAME}"
     if [[ ! -f "$FILE" ]]; then
