@@ -26,36 +26,15 @@ vars-to-conf () {
     exit 1
   fi
 
-  local +x FILE
+  for VAR_NAME in $(vars); do
+    local +x FILE="config/${ENV_NAME}/${VAR_NAME}"
+    if [[ ! -f "$FILE" ]]; then
+      bash_setup RED "=== File does not exist for ${ENV_NAME}: $FILE"
+      exit 1
+    fi
+  done
 
-  (
-    for VAR_NAME in $(vars); do
-      local +x FILE="config/${ENV_NAME}/${VAR_NAME}"
-      if [[ ! -f "$FILE" ]]; then
-        bash_setup RED "=== File does not exist for ${ENV_NAME}: $FILE"
-        exit 1
-      fi
-
-      # === From now on: use LOCAL and EXPORT to
-      #     prevent name clashing with template values.
-      export ${VAR_NAME}="$(cat "$FILE")"
-    done
-
-    local +x TMP="$(mktemp -d)"
-    rm -rf "$TMP"; mkdir -p "$TMP"
-
-    local +x TMP_FILE="$(mktemp "$TMP/XXXXXXXXXXXXXXXXXXXX")"
-    local +x OLD=""
-    local +x CURRENT="$(cat "$TEMPLATE")"
-    while [[ "$OLD" != "$CURRENT" ]]; do
-      echo "$CURRENT" > "$TMP_FILE"
-      local +x OLD="$CURRENT"
-      local +x CURRENT="$(/apps/bash_setup/bin/bash_setup template-render "config/$ENV_NAME" "$TMP_FILE")"
-    done
-
-    cat "$TMP_FILE"
-    rm -rf "$TMP"
-  )
+  /apps/bash_setup/bin/bash_setup template-render "config/$ENV_NAME" "$TEMPLATE"
 } # === end function
 
 specs () {
