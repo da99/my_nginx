@@ -12,52 +12,60 @@ envs () {
     grep -P '^[^a-z]+$'
 }
 
-# === {{CMD}}  "ENV"  "nginx.conf.mustache"
+# === {{CMD}}  "ENV_NAME"  "nginx.conf.mustache"
 vars-to-conf () {
-  local ENV_NAME="$(bash_setup upcase "$1")"; shift
-  local TEMPLATE="$1"; shift
+  local +x ENV_NAME="$(bash_setup upcase "$1")"; shift
+  local +x TEMPLATE="$(realpath -m "$1")"; shift
+
   # === CHECK IF ENVS match:
-  local ENVS="$(envs)"
-  local ENV_COUNT="$(echo "$ENVS" | wc -l)"
+  local +x ENVS="$(envs)"
+  local +x ENV_COUNT="$(echo "$ENVS" | wc -l)"
 
   if [[ $ENV_COUNT -lt 1 ]]; then
     bash_setup RED "=== {{No ENVS}} found in config/"
     exit 1
   fi
 
-  local FILE
+  local +x FILE
 
-  for VAR_NAME in $(vars); do
-    local FILE="config/${ENV_NAME}/${VAR_NAME}"
-    if [[ ! -f "$FILE" ]]; then
-      bash_setup RED "=== File does not exist for ${ENV_NAME}: $FILE"
-      exit 1
-    fi
+  (
+    for VAR_NAME in $(vars); do
+      local +x FILE="config/${ENV_NAME}/${VAR_NAME}"
+      if [[ ! -f "$FILE" ]]; then
+        bash_setup RED "=== File does not exist for ${ENV_NAME}: $FILE"
+        exit 1
+      fi
 
-    # === From now on: use LOCAL and EXPORT to
-    #     prevent name clashing with template values.
-    export ${VAR_NAME}="$(cat "$FILE")"
-  done
+      # === From now on: use LOCAL and EXPORT to
+      #     prevent name clashing with template values.
+      export ${VAR_NAME}="$(cat "$FILE")"
+    done
 
-  local OLD=""
-  local CURRENT="$(cat "$TEMPLATE")"
-  while [[ "$OLD" != "$CURRENT" ]]; do
-    local OLD="$CURRENT"
-    local CURRENT="$(echo "$CURRENT" | bash_setup mush)"
-  done
+    local +x TMP="$(mktemp -d)"
+    rm -rf "$TMP"; mkdir -p "$TMP"
 
-  echo "$CURRENT"
+    local +x TMP_FILE="$(mktemp "$TMP/XXXXXXXXXXXXXXXXXXXX")"
+    local +x OLD=""
+    local +x CURRENT="$(cat "$TEMPLATE")"
+    while [[ "$OLD" != "$CURRENT" ]]; do
+      echo "$CURRENT" > "$TMP_FILE"
+      local +x OLD="$CURRENT"
+      local +x CURRENT="$(/apps/bash_setup/bin/bash_setup template-render "config/$ENV_NAME" "$TMP_FILE")"
+    done
+
+    cat "$TMP_FILE"
+    rm -rf "$TMP"
+  )
 } # === end function
 
 specs () {
-  local TMP="/tmp/nginx_setup/vars"
+  local +x TMP="/tmp/nginx_setup_test/vars"
 
   reset-fs () {
     rm -rf "$TMP"
     mkdir -p $TMP
     cd $TMP
   }
-
 
   # === Can print in different envs:
   reset-fs
@@ -79,6 +87,15 @@ specs () {
   echo "This is my name and corp: {{NAME}} {{CORP}}" > "nginx.conf"
   should-exit 1 "nginx_setup vars-to-conf PROD nginx.conf 2>/dev/null"
   # =======================================================================================================
+
+  # === Renders nested mustaches:
+  reset-fs
+  nginx_setup var-upsert dev name "ted"              >/dev/null
+  nginx_setup var-upsert dev corp "{{NAME}} Corp" >/dev/null
+  echo "My name: {{CORP}}" > "nginx.conf"
+  should-match "My name: ted Corp" "nginx_setup vars-to-conf DEV nginx.conf"
+  # =======================================================================================================
+
 }
 
 
