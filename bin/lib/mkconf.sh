@@ -13,8 +13,8 @@ envs () {
 }
 
 # === {{CMD}}  "ENV_NAME"  "nginx.conf.mustache"
-vars-to-conf () {
-  local +x ENV_NAME="$(bash_setup upcase "$1")"; shift
+mkconf () {
+  local +x ENV_NAME="$1"; shift
   local +x TEMPLATE="$(realpath -m "$1")"; shift
 
   local +x ENVS="$(envs)"
@@ -49,31 +49,31 @@ specs () {
 
   # === Can print in different envs:
   reset-fs
-  nginx_setup var-upsert dev name "ted"              >/dev/null
-  nginx_setup var-upsert dev corp "General Creative" >/dev/null
-  nginx_setup var-upsert prod name "disney"          >/dev/null
-  nginx_setup var-upsert prod corp "Disney MegaCorp" >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV NAME "ted"              >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV CORP "General Creative" >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR PROD NAME "disney"          >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR PROD CORP "Disney MegaCorp" >/dev/null
   echo "This is my name and corp: {{NAME}} {{CORP}}" > "nginx.conf"
-  should-match "This is my name and corp: ted General Creative"   "nginx_setup vars-to-conf DEV nginx.conf"
-  should-match "This is my name and corp: disney Disney MegaCorp" "nginx_setup vars-to-conf PROD nginx.conf"
+  should-match "This is my name and corp: ted General Creative"   "nginx_setup mkconf DEV nginx.conf"
+  should-match "This is my name and corp: disney Disney MegaCorp" "nginx_setup mkconf PROD nginx.conf"
   # =======================================================================================================
 
 
   # === Fails if one var is not in the other:
   reset-fs
-  nginx_setup var-upsert dev name "ted"              >/dev/null
-  nginx_setup var-upsert dev corp "General Creative" >/dev/null
-  nginx_setup var-upsert prod name "disney"          >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV NAME "ted"              >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV CORP "General Creative" >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR PROD NAME "disney"          >/dev/null
   echo "This is my name and corp: {{NAME}} {{CORP}}" > "nginx.conf"
-  should-exit 1 "nginx_setup vars-to-conf PROD nginx.conf 2>/dev/null"
+  should-exit 1 "nginx_setup mkconf PROD nginx.conf 2>/dev/null"
   # =======================================================================================================
 
   # === Renders nested mustaches:
   reset-fs
-  nginx_setup var-upsert dev name "ted"              >/dev/null
-  nginx_setup var-upsert dev corp "{{NAME}} Corp" >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV NAME "ted"              >/dev/null
+  nginx_setup UPDATE-OR-CREATE-VAR DEV CORP "{{NAME}} Corp" >/dev/null
   echo "My name: {{CORP}}" > "nginx.conf"
-  should-match "My name: ted Corp" "nginx_setup vars-to-conf DEV nginx.conf"
+  should-match "My name: ted Corp" "nginx_setup mkconf DEV nginx.conf"
   # =======================================================================================================
 
 }
