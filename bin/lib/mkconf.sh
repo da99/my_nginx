@@ -30,7 +30,8 @@ mkconf () {
   for VAR_NAME in $(vars); do
     local +x FILE="config/${ENV_NAME}/${VAR_NAME}"
     if [[ ! -f "$FILE" ]]; then
-      bash_setup RED "=== File does not exist for ${ENV_NAME}: $FILE"
+      bash_setup RED "=== Var file does not exist for ${ENV_NAME}: $FILE"
+      find config/ -type f -name "$VAR_NAME" >&2
       exit 1
     fi
   done
