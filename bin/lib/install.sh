@@ -1,10 +1,8 @@
 
 # === {{CMD}}
-# === {{CMD}}  "path/to/dir"
-# === {{CMD}}  "path/to/dir"   "--compile --options"
 # === {{CMD}}  "--compile --options"
 install () {
-  local DIR="$(realpath --canonicalize-missing nginx/)"
+  local PREFIX="$(realpath --canonicalize-missing "$PWD")"
   local COMPILE=""
   local ORIG_PWD="$PWD"
   local ARCHIVE="$(latest-version)"
@@ -18,13 +16,10 @@ install () {
 
   # === Init /tmp dir:
   mkdir -p "$SOURCE_DIR"
-
-  # === Determine PREFIX:
-  if [[ -n "$@" && "$@" != *"--"* ]]; then
-    DIR="$(realpath --canonicalize-missing "$1")";
-    shift
-    mkdir -p "$DIR"
-  fi
+  mkdir -p "$ORIG_PWD/config"
+  mkdir -p "$ORIG_PWD/tmp"
+  mkdir -p "$ORIG_PWD/progs"
+  mkdir -p "$PREFIX"
 
   # === Determine compilation options:
   if [[ -n "$@" ]]; then
@@ -51,8 +46,12 @@ install () {
   cd "$SOURCE_DIR"
   cd "$BASE"
   ./configure                               \
-    --prefix="$DIR"                          \
-    --error-log-path="$DIR/startup.error.log" \
+    --prefix="$PREFIX"                       \
+    --sbin-path="$PREFIX/progs/nginx/sbin/nginx"    \
+    --conf-path="$ORIG_PWD/progs/nginx.conf"   \
+    --pid-path="$ORIG_PWD/progs/nginx.pid"  \
+    --error-log-path="$ORIG_PWD/progs/startup.error.log"  \
+    --http-log-path="$ORIG_PWD/progs/startup.access.log"  \
     --without-http_auth_basic_module    \
     --without-http_autoindex_module      \
     --without-http_geo_module             \
@@ -67,11 +66,13 @@ install () {
     --without-mail_imap_module        \
     --without-mail_smtp_module         \
     $COMPILE
+
+  sleep 3
   make
   make install
 
   cd "$ORIG_PWD"
-  bash_setup GREEN "=== {{NGINX installed}}: $DIR"
+  bash_setup GREEN "=== {{NGINX installed}}: $PREFIX"
 }
 
 latest-version () {
