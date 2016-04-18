@@ -21,7 +21,7 @@ watch () {
       { [[ ! -f "$path" ]] && continue; } || :
 
       # Check if file has changed:
-      if bash_setup is_same_file "$path"; then
+      if mksh_setup is-same-file "$path"; then
         echo "=== No change: $CHANGE"
         continue
       fi
