@@ -57,7 +57,7 @@ specs () {
   reset-fs
   nginx_setup CREATE-VAR DEV port 1234 >/dev/null
   echo -n "=== Output value for env: "
-  should-match-output "1234" 'nginx_setup READ-VAR DEV port'
+  should-match-stdout "1234" 'nginx_setup READ-VAR DEV port'
   # ===============================================================
 
   # ===============================================================
@@ -65,7 +65,7 @@ specs () {
   nginx_setup CREATE-VAR PROD port 1234 >/dev/null
   nginx_setup CREATE-VAR DEV  port 4567 >/dev/null
   echo -n "=== Sorts output by name: "
-  should-match-output "$(mksh_setup BOLD "{{DEV}}: 4567\n{{PROD}}: 1234")" \
+  should-match-stdout "$(mksh_setup BOLD "{{DEV}}: 4567\n{{PROD}}: 1234")" \
     'nginx_setup READ-VAR port'
   # ===============================================================
 
