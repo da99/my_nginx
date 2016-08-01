@@ -1,12 +1,21 @@
 
+source "$THIS_DIR/bin/public/is-latest/_.sh"
+
 # === {{CMD}}
 # === {{CMD}}  "--compile --options"
 install () {
+  if is-latest; then
+    source "$THIS_DIR/bin/public/version/_.sh"
+    mksh_setup GREEN "=== Already installed: {{$(version)}}"
+    exit 0
+  fi
+
   local PREFIX="$(realpath --canonicalize-missing "$PWD")"
   local COMPILE=""
   local ORIG_PWD="$PWD"
-  local ARCHIVE="$(latest-version)"
-  local BASE="$(basename "$ARCHIVE" .tar.gz)"
+  local LATEST_VERSION="$(nginx_setup latest-version)"
+  local ARCHIVE="nginx-${LATEST_VERSION}.tar.gz"
+  local BASE="nginx-${LATEST_VERSION}"
   local URL="http://nginx.org/download/${ARCHIVE}"
   local SOURCE_DIR="/tmp/$(mktemp -d "$BASE".XXXXXXXXXXXXXXXXXX)"
   local UNTAR="tar --directory=""$SOURCE_DIR"" -xzf "
@@ -52,6 +61,7 @@ install () {
     --pid-path="$ORIG_PWD/progs/nginx.pid"  \
     --error-log-path="$ORIG_PWD/progs/startup.error.log"  \
     --http-log-path="$ORIG_PWD/progs/startup.access.log"  \
+    --with-http_ssl_module             \
     --without-http_auth_basic_module    \
     --without-http_autoindex_module      \
     --without-http_geo_module             \
@@ -73,13 +83,5 @@ install () {
 
   cd "$ORIG_PWD"
   bash_setup GREEN "=== {{NGINX installed}}: $PREFIX"
-}
-
-latest-version () {
-  curl -s 'http://nginx.org/en/download.html' | \
-  grep -Po "Stable .+?\K(nginx-[\.\d]+\.tar.gz)" || {
-    bash_setup RED "!!! Failed to get latest version";
-    exit 1;
-  }
 }
 
