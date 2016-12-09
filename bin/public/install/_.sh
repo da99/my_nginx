@@ -6,7 +6,7 @@ source "$THIS_DIR/bin/public/is-latest/_.sh"
 install () {
   if is-latest; then
     source "$THIS_DIR/bin/public/version/_.sh"
-    mksh_setup GREEN "=== Already installed: {{$(version)}}"
+    sh_color GREEN "=== Already installed: {{$(version)}}"
     exit 0
   fi
 
@@ -82,6 +82,6 @@ install () {
   make install
 
   cd "$ORIG_PWD"
-  bash_setup GREEN "=== {{NGINX installed}}: $PREFIX"
+  sh_color GREEN "=== {{NGINX installed}}: $PREFIX"
 }
 
