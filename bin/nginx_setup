@@ -2,7 +2,7 @@
 #
 #
 THE_ARGS="$@"
-THIS_DIR="$(bash_setup dirname_of_bin "$0")"
+THIS_DIR="$(dirname "$(dirname "$0")")"
 
 if [[ -z "$@" ]]; then
   action="watch"
@@ -12,6 +12,7 @@ else
 fi
 
 set -u -e -o pipefail
+PATH="$PATH:$THIS_DIR/../mksh_setup/bin"
 
     source "$THIS_DIR/../mksh_setup/bin/source/name-to-func/_.sh"
     name-to-func "$action"  "$@"

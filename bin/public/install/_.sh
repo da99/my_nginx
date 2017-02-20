@@ -4,6 +4,9 @@ source "$THIS_DIR/bin/public/is-latest/_.sh"
 # === {{CMD}}
 # === {{CMD}}  "--compile --options"
 install () {
+  PATH="$PATH:$THIS_DIR/bin"
+  PATH="$PATH:$THIS_DIR/../sh_color/bin"
+  PATH="$PATH:$THIS_DIR/../sh_string/bin"
   if is-latest; then
     source "$THIS_DIR/bin/public/version/_.sh"
     sh_color GREEN "=== Already installed: {{$(version)}}"
