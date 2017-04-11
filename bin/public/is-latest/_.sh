@@ -1,7 +1,7 @@
 
-
 source "$THIS_DIR/bin/public/latest-version/_.sh"
 source "$THIS_DIR/bin/public/version/_.sh"
+
 # === {{CMD}}
 is-latest () {
   local +x LATEST="$(latest-version)"
