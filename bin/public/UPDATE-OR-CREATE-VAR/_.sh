@@ -3,7 +3,7 @@
 # === {{CMD}}  "DEV|PROD" "name"       # Opens editor to enter file.
 
 UPDATE-OR-CREATE-VAR () {
-  local ENV_NAME="$(bash_setup upcase "$1")"; shift
+  local ENV_NAME="$(sh_string UPPER "$1")"; shift
   local NAME="$1"; shift
   local FILE="config/$ENV_NAME/$NAME"
   local VAL="$@"
