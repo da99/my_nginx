@@ -1,0 +1,71 @@
+#!/usr/bin/env zsh
+#
+# === {{CMD}}
+# === This is a default install script.
+# === Copy and customize for your app's needs.
+
+PATH="$PATH:$THIS_DIR/bin"
+
+# Compiler and linker options:
+# https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/
+# http://www.bnikolic.co.uk/blog/gnu-ld-as-needed.html
+#
+# === CC:       cc
+# === CPP:      cpp
+# === LD:       ld
+# === CFLAGS:   
+# === CPPFLAGS:
+# === LDFLAGS:  
+
+local +x app_dir="$PWD"
+export PREFIX="$(realpath --canonicalize-missing "$PWD"/bin/nginx)"
+local +x src="$(my_nginx download)"
+
+mkdir -p "$PREFIX"
+mkdir -p "$app_dir"/configs
+mkdir -p "$app_dir"/tmp/logs
+
+export CFLAGS="-D_FORTIFY_SOURCE=2 -mtune=generic -O2 -pipe "
+export CXXFLAGS="-D_FORTIFY_SOURCE=2 "
+export LDFLAGS="-Wl,-z,relro -Wl,-z,now -Wl,--as-needed "
+
+test -d "$src"/src
+cd "$src"
+
+if which xbps-install &>/dev/null ; then
+  set -x
+  sudo xbps-install -S libressl-devel pcre-devel || :
+fi
+
+# === Compile:
+./configure               \
+  --prefix="$app_dir/configs/defaults"     \
+  --sbin-path="$PREFIX/nginx"     \
+  --conf-path="$app_dir/configs/nginx.conf"   \
+  --pid-path="$app_dir/tmp/nginx.pid"  \
+  --error-log-path="$app_dir/tmp/logs/startup.error.log"  \
+  --http-log-path="$app_dir/tmp/logs/startup.access.log"  \
+  --with-http_ssl_module             \
+  --without-http_auth_basic_module    \
+  --without-http_autoindex_module      \
+  --without-http_geo_module             \
+  --without-http_map_module           \
+  --without-http_fastcgi_module        \
+  --without-http_uwsgi_module           \
+  --without-http_scgi_module           \
+  --without-http_empty_gif_module       \
+  --without-http_ssi_module              \
+                                          \
+  --without-mail_pop3_module       \
+  --without-mail_imap_module        \
+  --without-mail_smtp_module
+  $@
+
+sleep 3
+sed -i 's/-lssl -lcrypt/-lssl $(LDFLAGS) -lcrypt/' objs/Makefile
+make CC=cc CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+make install
+
+cd "$app_dir"
+echo "=== {{NGINX installed}}: $PREFIX" >&2
+

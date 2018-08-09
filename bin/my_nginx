@@ -1,0 +1,38 @@
+#!/usr/bin/env zsh
+#
+#
+local +x THE_ARGS="$@"
+local +x THIS_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
+
+PATH="$PATH:$THIS_DIR/bin"
+PATH="$PATH:$THIS_DIR/../sh_string/bin"
+PATH="$PATH:$THIS_DIR/../my_zsh/bin"
+
+if [[ -z "$@" ]]; then
+  local +x ACTION="default"
+else
+  local +x ACTION=$1
+  shift
+fi
+
+set -u -e -o pipefail
+
+case $ACTION in
+
+  help|--help|-h)
+    my_zsh print-help $0 "$@"
+    ;;
+
+  *)
+    local +x SHELL_SCRIPT="$THIS_DIR/sh/${ACTION}"/_
+    if [[ -s "$SHELL_SCRIPT" ]]; then
+      source "$SHELL_SCRIPT"
+      exit 0
+    fi
+
+    # === It's an error:
+    echo "!!! Unknown action: $ACTION $@" 1>&2
+    exit 1
+    ;;
+
+esac

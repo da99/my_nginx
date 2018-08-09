@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+#
+# === {{CMD}}
+
+curl -s 'http://nginx.org/en/download.html' |  grep -Po "Stable .+?nginx-\K([\.\d]+)(?=\.tar.gz)" || {
+  echo "!!! Failed to get latest version" >&2
+  exit 1
+}

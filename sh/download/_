@@ -1,0 +1,51 @@
+#!/usr/bin/env zsh
+#
+# === {{CMD}}
+#
+set -u -e -o pipefail
+
+if [[ -z "$@" ]]; then
+  local +x ACTION="default"
+else
+  local +x ACTION="$1"; shift
+fi
+
+case "$ACTION" in
+  default)
+    local +x latest="$(my_nginx latest)"
+    if ! echo "$latest" | grep -P '^[\d\.]+$' >/dev/null; then
+      echo "!!! Unable to get latest version." >&2
+      exit 1
+    fi
+
+    local +x url="http://nginx.org/download/nginx-${latest}.tar.gz"
+    local +x file_name="$(basename "$url")"
+    local +x dir="$PWD"
+
+    if [[ -d "/progs/cache" ]]; then
+      cd /progs/cache
+    else
+      mkdir -p tmp
+      cd tmp
+    fi
+
+    if [[ -f "$file_name" ]]; then
+      echo "=== Already downloaded: $file_name" >&2
+    else
+      wget "$url"
+    fi
+
+    if [[ -d "nginx-$latest" ]]; then
+      echo "=== Already uncompressed." >&2
+    else
+      tar -xzf "$file_name"
+    fi
+    echo $PWD/nginx-$latest
+    ;;
+
+  *)
+    echo "!!! Unknown arguments: $ORIGINAL_ARGS" >&2
+    exit 1
+    ;;
+esac
+
